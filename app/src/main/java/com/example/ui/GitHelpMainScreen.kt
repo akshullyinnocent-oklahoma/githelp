@@ -393,10 +393,18 @@ fun GitHelpMainScreen(viewModel: GitHelpViewModel) {
                             var mcpName by remember { mutableStateOf("") }
                             var mcpUrl by remember { mutableStateOf("") }
 
+                            Text(
+                                text = "To connect to an MCP server running on your Termux on port 8080, use http://127.0.0.1:8080 or http://localhost:8080 as the Endpoint URL.",
+                                fontSize = 11.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+
                             OutlinedTextField(
                                 value = mcpName,
                                 onValueChange = { mcpName = it },
                                 label = { Text("Server Name") },
+                                placeholder = { Text("e.g. Termux MCP") },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -405,9 +413,44 @@ fun GitHelpMainScreen(viewModel: GitHelpViewModel) {
                                 value = mcpUrl,
                                 onValueChange = { mcpUrl = it },
                                 label = { Text("SSE / Endpoint URL") },
+                                placeholder = { Text("e.g. http://127.0.0.1:8080") },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
+
+                            // Quick loopback presets
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        mcpName = "Termux MCP"
+                                        mcpUrl = "http://127.0.0.1:8080"
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (settings.isAmoledTheme) NeonCyan.copy(alpha = 0.2f) else MaterialTheme.colorScheme.secondaryContainer
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Preset: 127.0.0.1:8080", fontSize = 10.sp, color = if (settings.isAmoledTheme) NeonCyan else MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
+
+                                Button(
+                                    onClick = {
+                                        mcpName = "Localhost MCP"
+                                        mcpUrl = "http://localhost:8080"
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (settings.isAmoledTheme) NeonGreen.copy(alpha = 0.2f) else MaterialTheme.colorScheme.secondaryContainer
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Preset: localhost:8080", fontSize = 10.sp, color = if (settings.isAmoledTheme) NeonGreen else MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
+                            }
 
                             Button(
                                 onClick = {
