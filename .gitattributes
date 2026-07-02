@@ -1,0 +1,19 @@
+# Auto-detect text files and perform LF normalization
+* text=auto
+
+# Declare files that will always have LF line endings on checkout
+*.sh text eol=lf
+gradlew text eol=lf
+
+# Declare files that will always have CRLF line endings on checkout
+*.bat text eol=crlf
+gradlew.bat text eol=crlf
+
+# Denote all binary files (prevent CRLF/LF normalization)
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.keystore binary

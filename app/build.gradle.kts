@@ -31,12 +31,6 @@ android {
       keyAlias = "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
-    }
   }
 
   buildTypes {
@@ -47,11 +41,7 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      if (file("${rootDir}/debug.keystore").exists()) {
-        signingConfig = signingConfigs.getByName("debugConfig")
-      } else {
-        signingConfig = signingConfigs.getByName("debug")
-      }
+      // Standard built-in debug signing configuration is used automatically
     }
   }
   compileOptions {
