@@ -78,7 +78,7 @@ object ApiClient {
             "OpenRouter" -> "https://openrouter.ai/api/v1/models"
             "Nvidia NIM" -> "https://integrate.api.nvidia.com/v1/models"
             "Mistral" -> "https://api.mistral.ai/v1/models"
-            "DeepSeek" -> "https://api.deepseek.com/v1/models"
+            "DeepSeek" -> "https://api.deepseek.com/models"
             "Qwen" -> "https://dashscope.aliyuncs.com/compatible-mode/v1/models"
             "Ollama" -> {
                 val base = if (customUrl.isNotBlank()) customUrl else "http://localhost:11434"
@@ -258,7 +258,7 @@ object ApiClient {
             "OpenRouter" -> "https://openrouter.ai/api/v1/chat/completions"
             "Nvidia NIM" -> "https://integrate.api.nvidia.com/v1/chat/completions"
             "Mistral" -> "https://api.mistral.ai/v1/chat/completions"
-            "DeepSeek" -> "https://api.deepseek.com/v1/chat/completions"
+            "DeepSeek" -> "https://api.deepseek.com/chat/completions"
             "Qwen" -> "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
             "Ollama" -> {
                 val base = if (customUrl.isNotBlank()) customUrl else "http://localhost:11434"

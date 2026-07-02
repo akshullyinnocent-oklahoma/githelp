@@ -1,8 +1,14 @@
 package com.example.ui
 
+import android.Manifest
 import android.app.Application
+import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.database.*
@@ -14,6 +20,9 @@ import com.example.network.ToolCall
 import com.example.terminal.TerminalExecutor
 import com.example.workspace.CheckpointManager
 import com.example.workspace.WorkspaceManager
+import com.example.workspace.Decompiler
+import com.example.workspace.InspectionResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -67,6 +76,12 @@ class GitHelpViewModel(application: Application) : AndroidViewModel(application)
 
     private val _activeWorkspaceFiles = MutableStateFlow<List<String>>(emptyList())
     val activeWorkspaceFiles: StateFlow<List<String>> = _activeWorkspaceFiles.asStateFlow()
+
+    private val _isStoragePermissionGranted = MutableStateFlow(false)
+    val isStoragePermissionGranted: StateFlow<Boolean> = _isStoragePermissionGranted.asStateFlow()
+
+    private val _inspectedFileResult = MutableStateFlow<InspectionResult?>(null)
+    val inspectedFileResult: StateFlow<InspectionResult?> = _inspectedFileResult.asStateFlow()
 
     init {
         val database = AppDatabase.getDatabase(application)
@@ -343,6 +358,89 @@ class GitHelpViewModel(application: Application) : AndroidViewModel(application)
             val app = getApplication<Application>()
             WorkspaceManager.exportToSaf(app, uri)
         }
+    }
+
+    // Direct local storage import and permission methods (using MANAGE_EXTERNAL_STORAGE)
+    fun checkStoragePermission(context: Context) {
+        _isStoragePermissionGranted.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            val read = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            val write = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            read && write
+        }
+    }
+
+    fun importWorkspaceFromLocalPath(path: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val src = File(path)
+                if (src.exists()) {
+                    val app = getApplication<Application>()
+                    val dest = WorkspaceManager.getWorkspaceDir(app)
+                    if (src.isDirectory) {
+                        src.copyRecursively(dest, overwrite = true)
+                    } else {
+                        val destFile = File(dest, src.name)
+                        src.copyTo(destFile, overwrite = true)
+                    }
+                    refreshWorkspaceFileList()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error copying local path", e)
+            }
+        }
+    }
+
+    fun inspectFile(fileRelativePath: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val app = getApplication<Application>()
+            val workspace = WorkspaceManager.getWorkspaceDir(app)
+            val file = File(workspace, fileRelativePath)
+            if (file.exists()) {
+                val result = Decompiler.inspectFile(file)
+                _inspectedFileResult.value = result.copy(
+                    details = result.details + "\nPath: ${file.absolutePath}"
+                )
+            }
+        }
+    }
+
+    fun inspectAbsoluteFile(absolutePath: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val file = File(absolutePath)
+            if (file.exists()) {
+                val result = Decompiler.inspectFile(file)
+                _inspectedFileResult.value = result.copy(
+                    details = result.details + "\nPath: ${file.absolutePath}"
+                )
+            }
+        }
+    }
+
+    fun decompileZipEntry(zipFilePath: String, entryName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val app = getApplication<Application>()
+                val zipFile = File(zipFilePath)
+                if (zipFile.exists()) {
+                    val tempDest = File(app.cacheDir, "extracted_${entryName.replace('/', '_')}")
+                    Decompiler.extractZipEntry(zipFile, entryName, tempDest)
+                    val result = Decompiler.inspectFile(tempDest)
+                    _inspectedFileResult.value = result.copy(
+                        fileType = "${result.fileType} (from Zip)",
+                        details = "Extracted from: ${zipFile.name}\nEntry: $entryName\n\n${result.details}"
+                    )
+                    tempDest.delete()
+                }
+            } catch (e: Exception) {
+                _inspectedFileResult.value = InspectionResult("Error", "Extraction Failed", e.stackTraceToString())
+            }
+        }
+    }
+
+    fun clearInspectionResult() {
+        _inspectedFileResult.value = null
     }
 
     // Send chat message & trigger agentic processing loop
