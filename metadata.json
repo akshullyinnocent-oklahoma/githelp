@@ -1,0 +1,6 @@
+{
+  "name": "GitHelp",
+  "description": "An open-source AI developer assistant with multi-provider BYOK support, autonomous execution, local terminals, SAF integration, and checkpoints.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
